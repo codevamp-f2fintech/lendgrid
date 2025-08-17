@@ -1,7 +1,10 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { DollarSign, TrendingUp, Calendar, Download, Search, Filter, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,9 +12,11 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DollarSign, TrendingUp, Calendar, Download, Search, Filter, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { exportRevenueReport } from '@/lib/exporter'
+import { useToast } from "@/hooks/use-toast"
+import { ExportButton } from '@/components/ui/button-to-export'
+import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 
 const mockData = {
   metrics: {
@@ -114,6 +119,20 @@ export function AggregatorCommission() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLender, setFilterLender] = useState('')
   const [dateRange, setDateRange] = useState('30d')
+  const [chartLoading, setChartLoading] = useState(true)
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+
+  const chartRef = useRef<HTMLDivElement | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setCardsLoading(false)
+      setChartLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -143,19 +162,41 @@ export function AggregatorCommission() {
     }
   }
 
+  async function handleExport(format: "pdf" | "xlsx") {
+    try {
+      setExporting(true)
+      await exportRevenueReport({
+        format,
+        fileName: "revenue-report",
+        timeRange,
+        selectedMetric,
+        chartElement: chartRef.current ?? undefined,
+        metrics: mockData.metrics,
+        revenueData: mockData.revenueData,
+        lenderRevenue: mockData.lenderRevenue,
+        recentTransactions: mockData.recentTransactions,
+      })
+      toast({ title: "Export complete", description: `Saved ${format.toUpperCase()} report for ${timeRange}.` })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Export failed", description: err?.message ?? "Something went wrong." })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const filteredCommissions = mockData.commissionHistory.filter(commission => {
     const matchesSearch = commission.applicationId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         commission.lenderName.toLowerCase().includes(searchTerm.toLowerCase())
+      commission.lenderName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = !filterStatus || commission.status === filterStatus
     const matchesLender = !filterLender || commission.lenderName === filterLender
     return matchesSearch && matchesStatus && matchesLender
   })
 
-  const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend }: any) => (
+  const MetricCard = ({ index, title, value, icon: Icon, color, subtitle, trend }: any) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
     >
       <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10">
         <CardContent className="p-6">
@@ -208,44 +249,54 @@ export function AggregatorCommission() {
                 <SelectItem value="1y">1 Year</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-gradient-to-r from-gold to-blue text-dark">
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
+            <ExportButton onExport={handleExport} disabled={exporting} />
           </div>
         </motion.div>
 
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title="Total Commission Earned"
-            value={formatCurrency(mockData.metrics.totalEarned)}
-            icon={DollarSign}
-            color="bg-gold/20 text-gold"
-            trend="+12.5% from last month"
-          />
-          <MetricCard
-            title="Pending Payouts"
-            value={formatCurrency(mockData.metrics.pendingAmount)}
-            icon={Clock}
-            color="bg-orange-500/20 text-orange-400"
-            subtitle="Awaiting payment"
-          />
-          <MetricCard
-            title="Paid Amount"
-            value={formatCurrency(mockData.metrics.paidAmount)}
-            icon={CheckCircle}
-            color="bg-green-500/20 text-green-400"
-            subtitle="Successfully received"
-          />
-          <MetricCard
-            title="Avg Commission Rate"
-            value={`${mockData.metrics.avgCommissionRate}%`}
-            icon={TrendingUp}
-            color="bg-blue/20 text-blue"
-            subtitle="Across all lenders"
-          />
-        </div>
+        {cardsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              index={0}
+              title="Total Commission Earned"
+              value={formatCurrency(mockData.metrics.totalEarned)}
+              icon={DollarSign}
+              color="bg-gold/20 text-gold"
+              trend="+12.5% from last month"
+            />
+            <MetricCard
+              index={1}
+              title="Pending Payouts"
+              value={formatCurrency(mockData.metrics.pendingAmount)}
+              icon={Clock}
+              color="bg-orange-500/20 text-orange-400"
+              subtitle="Awaiting payment"
+            />
+            <MetricCard
+              index={2}
+              title="Paid Amount"
+              value={formatCurrency(mockData.metrics.paidAmount)}
+              icon={CheckCircle}
+              color="bg-green-500/20 text-green-400"
+              subtitle="Successfully received"
+            />
+            <MetricCard
+              index={3}
+              title="Avg Commission Rate"
+              value={`${mockData.metrics.avgCommissionRate}%`}
+              icon={TrendingUp}
+              color="bg-blue/20 text-blue"
+              subtitle="Across all lenders"
+            />
+          </div>
+        )}
 
         {/* Commission Analytics */}
         <Tabs defaultValue="trends" className="space-y-6">
@@ -275,26 +326,30 @@ export function AggregatorCommission() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={mockData.commissionTrends}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: '1px solid #374151',
-                            borderRadius: '8px'
-                          }}
-                          formatter={(value) => [formatCurrency(value as number), '']}
-                        />
-                        <Bar dataKey="earned" fill="#FFD700" name="Total Earned" radius={[2, 2, 0, 0]} />
-                        <Bar dataKey="paid" fill="#22c55e" name="Paid" radius={[2, 2, 0, 0]} />
-                        <Bar dataKey="pending" fill="#f97316" name="Pending" radius={[2, 2, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {chartLoading ? (
+                    <ChartSkeleton height={354} />
+                  ) : (
+                    <div className="h-96 w-full" ref={chartRef}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={mockData.commissionTrends}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" />
+                          <YAxis stroke="#9CA3AF" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#1F2937',
+                              border: '1px solid #374151',
+                              borderRadius: '8px'
+                            }}
+                            formatter={(value) => [formatCurrency(value as number), '']}
+                          />
+                          <Bar dataKey="earned" fill="#FFD700" name="Total Earned" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="paid" fill="#22c55e" name="Paid" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="pending" fill="#f97316" name="Pending" radius={[2, 2, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -331,9 +386,9 @@ export function AggregatorCommission() {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: '#1F2937', 
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#1F2937',
                               border: '1px solid #374151',
                               borderRadius: '8px'
                             }}
@@ -352,8 +407,8 @@ export function AggregatorCommission() {
                           className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg"
                         >
                           <div className="flex items-center space-x-3">
-                            <div 
-                              className="w-4 h-4 rounded-full" 
+                            <div
+                              className="w-4 h-4 rounded-full"
                               style={{ backgroundColor: lender.color }}
                             />
                             <span className="text-white font-medium">{lender.name}</span>

@@ -1,16 +1,22 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { TrendingUp, DollarSign, CreditCard, Building2, Download, Search, Calendar } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { TrendingUp, DollarSign, CreditCard, Building2, Download, Filter, Search, Bell, FileText, Calendar } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { CardSkeleton, ChartSkeleton, TableSkeleton } from '@/components/ui/loading-skeleton'
+import { TablePagination } from '@/components/ui/pagination'
+import { ExportButton } from '@/components/ui/button-to-export'
+import { exportRevenueReport } from '@/lib/exporter'
+import { useToast } from '@/hooks/use-toast'
 
 const mockData = {
   metrics: {
@@ -65,10 +71,85 @@ const mockData = {
 }
 
 export function AggregatorDashboard() {
-  const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLender, setFilterLender] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [isTableLoading, setIsTableLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+
+  const tableTopRef = useRef<HTMLDivElement | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsTableLoading(false)
+      setCardsLoading(false)
+      setChartLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchTerm, filterStatus, filterLender])
+
+  const filteredRules = useMemo(() => {
+    return mockData.applications.filter((rule) => {
+      const matchesSearch =
+        rule.lenderName.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = !filterStatus || filterStatus === "all" || rule.payoutStatus === filterStatus
+      return matchesSearch && matchesStatus
+    })
+  }, [searchTerm, filterStatus])
+
+  const total = filteredRules.length
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredRules.slice(start, start + pageSize)
+  }, [filteredRules, page, pageSize])
+
+  const handlePageChange = async (newPage: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPage(newPage)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+  const handlePageSizeChange = async (size: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPageSize(size)
+    setPage(1)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  async function handleExport(format: "pdf" | "xlsx") {
+    try {
+      setExporting(true)
+      await exportRevenueReport({
+        format,
+        fileName: "revenue-report",
+        timeRange,
+        selectedMetric,
+        // chartElement: chartRef.current ?? undefined,
+        metrics: mockData.metrics,
+        revenueData: mockData.revenueData,
+        lenderRevenue: mockData.lenderRevenue,
+        recentTransactions: mockData.recentTransactions,
+      })
+      toast({ title: "Export complete", description: `Saved ${format.toUpperCase()} report for ${timeRange}.` })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Export failed", description: err?.message ?? "Something went wrong." })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -78,26 +159,32 @@ export function AggregatorDashboard() {
     }).format(amount)
   }
 
-  const MetricCard = ({ title, value, icon: Icon, trend, color }: any) => (
-    <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-colors">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-400">{title}</p>
-            <p className="text-2xl font-bold text-white mt-2">{value}</p>
-            {trend && (
-              <p className="text-sm text-green-400 mt-1 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                {trend}
-              </p>
-            )}
+  const MetricCard = ({ index, title, value, icon: Icon, trend, color }: any) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+    >
+      <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-colors">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-400">{title}</p>
+              <p className="text-2xl font-bold text-white mt-2">{value}</p>
+              {trend && (
+                <p className="text-sm text-green-400 mt-1 flex items-center">
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  {trend}
+                </p>
+              )}
+            </div>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+              <Icon className="w-6 h-6" />
+            </div>
           </div>
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-            <Icon className="w-6 h-6" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 
   return (
@@ -114,43 +201,53 @@ export function AggregatorDashboard() {
               <Calendar className="w-4 h-4 mr-2" />
               Last 30 days
             </Button>
-            <Button className="bg-gradient-to-r from-gold to-blue text-dark">
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
+            <ExportButton onExport={handleExport} disabled={exporting} />
           </div>
         </div>
 
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title="Total Disbursed Amount"
-            value={formatCurrency(mockData.metrics.totalDisbursed)}
-            icon={DollarSign}
-            trend="+12.5% from last month"
-            color="bg-green-500/20 text-green-400"
-          />
-          <MetricCard
-            title="Total Commission Earned"
-            value={formatCurrency(mockData.metrics.totalCommission)}
-            icon={TrendingUp}
-            trend="+8.2% from last month"
-            color="bg-gold/20 text-gold"
-          />
-          <MetricCard
-            title="Pending Payouts"
-            value={formatCurrency(mockData.metrics.pendingPayouts)}
-            icon={CreditCard}
-            color="bg-orange-500/20 text-orange-400"
-          />
-          <MetricCard
-            title="Active Lender Products"
-            value={mockData.metrics.activeLenders}
-            icon={Building2}
-            trend="+2 new this month"
-            color="bg-blue/20 text-blue"
-          />
-        </div>
+        {cardsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              index={0}
+              title="Total Disbursed Amount"
+              value={formatCurrency(mockData.metrics.totalDisbursed)}
+              icon={DollarSign}
+              trend="+12.5% from last month"
+              color="bg-green-500/20 text-green-400"
+            />
+            <MetricCard
+              index={1}
+              title="Total Commission Earned"
+              value={formatCurrency(mockData.metrics.totalCommission)}
+              icon={TrendingUp}
+              trend="+8.2% from last month"
+              color="bg-gold/20 text-gold"
+            />
+            <MetricCard
+              index={2}
+              title="Pending Payouts"
+              value={formatCurrency(mockData.metrics.pendingPayouts)}
+              icon={CreditCard}
+              color="bg-orange-500/20 text-orange-400"
+            />
+            <MetricCard
+              index={3}
+              title="Active Lender Products"
+              value={mockData.metrics.activeLenders}
+              icon={Building2}
+              trend="+2 new this month"
+              color="bg-blue/20 text-blue"
+            />
+          </div>
+        )}
 
         {/* Chart */}
         <Card className="bg-gray-800/50 border-gray-700">
@@ -161,30 +258,34 @@ export function AggregatorDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockData.chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1F2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value) => [formatCurrency(value as number), 'Amount']}
-                  />
-                  <Bar dataKey="amount" fill="url(#goldGradient)" radius={[4, 4, 0, 0]} />
-                  <defs>
-                    <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FFD700" />
-                      <stop offset="100%" stopColor="#FFA500" />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {chartLoading ? (
+              <ChartSkeleton height={254} />
+            ) : (
+              <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={mockData.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1F2937',
+                        border: '1px solid #374151',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value) => [formatCurrency(value as number), 'Amount']}
+                    />
+                    <Bar dataKey="amount" fill="url(#goldGradient)" radius={[4, 4, 0, 0]} />
+                    <defs>
+                      <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#FFD700" />
+                        <stop offset="100%" stopColor="#FFA500" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -233,36 +334,26 @@ export function AggregatorDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            <div ref={tableTopRef} />
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">App ID</TableHead>
-                    <TableHead className="text-gray-300">Lender</TableHead>
-                    <TableHead className="text-gray-300">Loan Type</TableHead>
-                    <TableHead className="text-gray-300">Disbursed Amount</TableHead>
-                    <TableHead className="text-gray-300">Commission %</TableHead>
-                    <TableHead className="text-gray-300">Commission Amount</TableHead>
-                    <TableHead className="text-gray-300">Status</TableHead>
-                    <TableHead className="text-gray-300">Payout Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    [...Array(5)].map((_, i) => (
-                      <TableRow key={i} className="border-gray-700">
-                        <TableCell><Skeleton className="h-4 w-20 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-28 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16 bg-gray-700" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20 bg-gray-700" /></TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    mockData.applications.map((app) => (
+              {isTableLoading ? (
+                <TableSkeleton columns={6} rows={pageSize} />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-700">
+                      <TableHead className="text-gray-300">App ID</TableHead>
+                      <TableHead className="text-gray-300">Lender</TableHead>
+                      <TableHead className="text-gray-300">Loan Type</TableHead>
+                      <TableHead className="text-gray-300">Disbursed Amount</TableHead>
+                      <TableHead className="text-gray-300">Commission %</TableHead>
+                      <TableHead className="text-gray-300">Commission Amount</TableHead>
+                      <TableHead className="text-gray-300">Status</TableHead>
+                      <TableHead className="text-gray-300">Payout Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginated.map((app) => (
                       <TableRow key={app.id} className="border-gray-700 hover:bg-gray-800/50">
                         <TableCell className="text-white font-medium">{app.id}</TableCell>
                         <TableCell className="text-white">{app.lenderName}</TableCell>
@@ -282,11 +373,20 @@ export function AggregatorDashboard() {
                           {app.payoutDate || 'Pending'}
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
+
+            <TablePagination
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              className="mt-4"
+            />
           </CardContent>
         </Card>
       </div>

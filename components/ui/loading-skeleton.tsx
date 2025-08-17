@@ -50,7 +50,7 @@ export function CardSkeleton({
     <div className="rounded-lg bg-gray-800/50 border border-gray-700 overflow-hidden min-w-0">
       <div className="p-6 space-y-3">
         {Array.from({ length: headerLines }).map((_, i) => (
-          <Skeleton key={i} className={i === 0 ? "h-6 w-40 bg-gray-800 min-w-0" : "h-4 w-64 bg-gray-800 min-w-0"} />
+          <Skeleton key={i} className={i === 0 ? "h-6 w-40 bg-gray-800 min-w-0" : "h-4 w-60 bg-gray-800 min-w-0"} />
         ))}
         <div className="pt-4">
           <Skeleton className="w-full bg-gray-800 min-w-0" style={{ height: bodyHeight }} />

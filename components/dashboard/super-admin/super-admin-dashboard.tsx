@@ -2,13 +2,12 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { TrendingUp, DollarSign, Building2, Users, Crown, CheckCircle, XCircle, AlertCircle, Settings } from 'lucide-react'
+import { TrendingUp, DollarSign, Building2, Users, Crown, CheckCircle, XCircle, Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 import { navigationPaths } from '@/lib/navigation'

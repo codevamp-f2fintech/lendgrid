@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,8 +24,10 @@ import {
   Camera, Key, Smartphone, Globe, FileText, DollarSign, Users, Target, Eye, EyeOff,
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { CardSkeleton } from '@/components/ui/loading-skeleton'
 
 export function AggregatorSettings() {
+  const [cardsLoading, setCardsLoading] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [profileData, setProfileData] = useState({
     companyName: 'FinanceFlow Partners',
@@ -53,6 +55,13 @@ export function AggregatorSettings() {
     commissionDisplay: 'percentage',
     dashboardView: 'detailed'
   })
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setCardsLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <DashboardLayout userRole="aggregator">
@@ -108,77 +117,81 @@ export function AggregatorSettings() {
 
             {/* Profile Settings */}
             <TabsContent value="profile" className="space-y-6">
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white">Profile Information</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Update your personal and contact information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Profile Picture */}
-                  <div className="flex items-center space-x-6">
-                    <Avatar className="w-24 h-24">
-                      <AvatarImage src="/placeholder.svg?height=96&width=96" />
-                      <AvatarFallback className="bg-gray-800 text-gray-300 text-2xl">
-                        RK
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <Button variant="outline" className="border-gray-700 text-gray-300">
-                        <Camera className="w-4 h-4 mr-2" />
-                        Change Photo
-                      </Button>
-                      <p className="text-gray-400 text-sm mt-2">
-                        JPG, GIF or PNG. 1MB max.
-                      </p>
+              {cardsLoading ? (
+                <CardSkeleton headerLines={2} bodyHeight={456} />
+              ) : (
+                <Card className="bg-gray-900/50 border-gray-800">
+                  <CardHeader>
+                    <CardTitle className="text-white">Profile Information</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Update your personal and contact information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Profile Picture */}
+                    <div className="flex items-center space-x-6">
+                      <Avatar className="w-24 h-24">
+                        <AvatarImage src="/placeholder.svg?height=96&width=96" />
+                        <AvatarFallback className="bg-gray-800 text-gray-300 text-2xl">
+                          RK
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <Button variant="outline" className="border-gray-700 text-gray-300">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Change Photo
+                        </Button>
+                        <p className="text-gray-400 text-sm mt-2">
+                          JPG, GIF or PNG. 1MB max.
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <Separator className="bg-gray-800" />
+                    <Separator className="bg-gray-800" />
 
-                  {/* Personal Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="contactPerson" className="text-gray-300">Contact Person</Label>
-                      <Input
-                        id="contactPerson"
-                        value={profileData.contactPerson}
-                        onChange={(e) => setProfileData({ ...profileData, contactPerson: e.target.value })}
-                        className="bg-gray-800 border-gray-700 text-white"
-                      />
+                    {/* Personal Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="contactPerson" className="text-gray-300">Contact Person</Label>
+                        <Input
+                          id="contactPerson"
+                          value={profileData.contactPerson}
+                          onChange={(e) => setProfileData({ ...profileData, contactPerson: e.target.value })}
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-gray-300">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profileData.email}
+                          onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-gray-300">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          value={profileData.phone}
+                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address" className="text-gray-300">Address</Label>
+                        <Input
+                          id="address"
+                          value={profileData.address}
+                          onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-gray-300">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profileData.email}
-                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                        className="bg-gray-800 border-gray-700 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-gray-300">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        value={profileData.phone}
-                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                        className="bg-gray-800 border-gray-700 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address" className="text-gray-300">Address</Label>
-                      <Input
-                        id="address"
-                        value={profileData.address}
-                        onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                        className="bg-gray-800 border-gray-700 text-white"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Business Settings */}

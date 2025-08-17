@@ -13,7 +13,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 import { ExportButton } from "@/components/ui/button-to-export"
-import { exportRevenueReport, type TimeRange } from "@/lib/exporter"
+import { InvoiceButton } from "@/components/ui/button-for-invoice"
+import {
+  exportRevenueReport,
+  type TimeRange,
+  filterByTimeRange,
+  generateInvoicePDF,
+  type Invoice,
+} from "@/lib/exporter"
 import { useToast } from "@/hooks/use-toast"
 
 const mockData = {
@@ -61,6 +68,7 @@ export function SuperAdminRevenue() {
   const [chartLoading, setChartLoading] = useState(true)
   const [cardsLoading, setCardsLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [invoicing, setInvoicing] = useState(false)
 
   const chartRef = useRef<HTMLDivElement | null>(null)
   const { toast } = useToast()
@@ -100,6 +108,48 @@ export function SuperAdminRevenue() {
       toast({ variant: "destructive", title: "Export failed", description: err?.message ?? "Something went wrong." })
     } finally {
       setExporting(false)
+    }
+  }
+
+  async function handleGenerateInvoice() {
+    try {
+      setInvoicing(true)
+      // Build invoice from current time range and transactions (commission items)
+      const months = filterByTimeRange(mockData.revenueData, timeRange).map((d) => d.month)
+      const transactionsForRange = mockData.recentTransactions // Example: using latest sample. Replace with filtered server data if available.
+
+      const items: Invoice["items"] = transactionsForRange.map((t) => ({
+        description: `Commission ${t.id} — ${t.lender} → ${t.aggregator} (${t.date})`,
+        quantity: 1,
+        unitPrice: t.commission,
+      }))
+
+      const invoice: Invoice = {
+        invoiceNo: `REV-${Date.now()}`,
+        date: new Date().toISOString().slice(0, 10),
+        dueDate: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+        seller: {
+          name: "LendGrid Platform",
+          address: "BKC, Mumbai, Maharashtra, IN",
+          email: "billing@lendgrid.example",
+        },
+        buyer: {
+          name: "Acme Finance Pvt Ltd",
+          address: "Bangalore, Karnataka, IN",
+          email: "accounts@acme.example",
+        },
+        items,
+        taxRatePct: 18,
+        notes: `Automated invoice for period: ${months[0]} – ${months[months.length - 1]}.`,
+        currency: "INR",
+      }
+
+      await generateInvoicePDF(invoice, `invoice-${invoice.invoiceNo}`)
+      toast({ title: "Invoice generated", description: `Saved PDF invoice ${invoice.invoiceNo}.` })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Invoice failed", description: err?.message ?? "Something went wrong." })
+    } finally {
+      setInvoicing(false)
     }
   }
 
@@ -162,6 +212,7 @@ export function SuperAdminRevenue() {
                 <SelectItem value="12m">12 Months</SelectItem>
               </SelectContent>
             </Select>
+            <InvoiceButton onGenerate={handleGenerateInvoice} disabled={invoicing} />
             <ExportButton onExport={handleExport} disabled={exporting} />
           </div>
         </motion.div>

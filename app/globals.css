@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 /* Prevent page-level horizontal scroll */
-html, body, #__next {
-max-width: 100%;
-overflow-x: hidden;
+html,
+body,
+#__next {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 @layer base {
@@ -30,7 +32,7 @@ overflow-x: hidden;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
     --radius: 0.75rem;
-    
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 0 0% 98%;
@@ -46,6 +48,7 @@ overflow-x: hidden;
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -86,7 +89,7 @@ overflow-x: hidden;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -95,7 +98,7 @@ overflow-x: hidden;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -104,7 +107,7 @@ overflow-x: hidden;
 .glass-button:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
@@ -112,21 +115,21 @@ overflow-x: hidden;
 
 .glass-button:active {
   transform: translateY(0);
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Primary Button Styles */
 .btn-primary {
-  background: linear-gradient(135deg, 
-    rgba(255, 215, 0, 0.9) 0%, 
-    rgba(255, 193, 7, 0.9) 25%,
-    rgba(0, 122, 255, 0.9) 75%,
-    rgba(59, 130, 246, 0.9) 100%);
+  background: linear-gradient(135deg,
+      rgba(255, 215, 0, 0.9) 0%,
+      rgba(255, 193, 7, 0.9) 25%,
+      rgba(0, 122, 255, 0.9) 75%,
+      rgba(59, 130, 246, 0.9) 100%);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(255, 215, 0, 0.3),
     0 8px 32px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -136,12 +139,12 @@ overflow-x: hidden;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, 
-    rgba(255, 215, 0, 1) 0%, 
-    rgba(255, 193, 7, 1) 25%,
-    rgba(0, 122, 255, 1) 75%,
-    rgba(59, 130, 246, 1) 100%);
-  box-shadow: 
+  background: linear-gradient(135deg,
+      rgba(255, 215, 0, 1) 0%,
+      rgba(255, 193, 7, 1) 25%,
+      rgba(0, 122, 255, 1) 75%,
+      rgba(59, 130, 246, 1) 100%);
+  box-shadow:
     0 6px 24px rgba(255, 215, 0, 0.4),
     0 12px 40px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -153,7 +156,7 @@ overflow-x: hidden;
   background: rgba(100, 116, 139, 0.1);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   color: rgba(226, 232, 240, 0.9);
@@ -163,7 +166,7 @@ overflow-x: hidden;
 .btn-secondary:hover {
   background: rgba(148, 163, 184, 0.15);
   border-color: rgba(203, 213, 225, 0.4);
-  box-shadow: 
+  box-shadow:
     0 6px 20px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
@@ -171,12 +174,12 @@ overflow-x: hidden;
 
 /* Success Button Styles */
 .btn-success {
-  background: linear-gradient(135deg, 
-    rgba(34, 197, 94, 0.9) 0%, 
-    rgba(22, 163, 74, 0.9) 100%);
+  background: linear-gradient(135deg,
+      rgba(34, 197, 94, 0.9) 0%,
+      rgba(22, 163, 74, 0.9) 100%);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(34, 197, 94, 0.3);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(34, 197, 94, 0.3),
     0 8px 32px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -185,10 +188,10 @@ overflow-x: hidden;
 }
 
 .btn-success:hover {
-  background: linear-gradient(135deg, 
-    rgba(34, 197, 94, 1) 0%, 
-    rgba(22, 163, 74, 1) 100%);
-  box-shadow: 
+  background: linear-gradient(135deg,
+      rgba(34, 197, 94, 1) 0%,
+      rgba(22, 163, 74, 1) 100%);
+  box-shadow:
     0 6px 24px rgba(34, 197, 94, 0.4),
     0 12px 40px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -197,12 +200,12 @@ overflow-x: hidden;
 
 /* Danger Button Styles */
 .btn-danger {
-  background: linear-gradient(135deg, 
-    rgba(239, 68, 68, 0.9) 0%, 
-    rgba(220, 38, 38, 0.9) 100%);
+  background: linear-gradient(135deg,
+      rgba(239, 68, 68, 0.9) 0%,
+      rgba(220, 38, 38, 0.9) 100%);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(239, 68, 68, 0.3),
     0 8px 32px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -211,10 +214,10 @@ overflow-x: hidden;
 }
 
 .btn-danger:hover {
-  background: linear-gradient(135deg, 
-    rgba(239, 68, 68, 1) 0%, 
-    rgba(220, 38, 38, 1) 100%);
-  box-shadow: 
+  background: linear-gradient(135deg,
+      rgba(239, 68, 68, 1) 0%,
+      rgba(220, 38, 38, 1) 100%);
+  box-shadow:
     0 6px 24px rgba(239, 68, 68, 0.4),
     0 12px 40px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -227,7 +230,7 @@ overflow-x: hidden;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
-  box-shadow: 
+  box-shadow:
     0 10px 40px rgba(0, 0, 0, 0.3),
     0 4px 16px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -236,7 +239,7 @@ overflow-x: hidden;
 
 .enhanced-card:hover {
   border-color: rgba(255, 215, 0, 0.3);
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 8px 24px rgba(255, 215, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -248,7 +251,7 @@ overflow-x: hidden;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.2),
     0 1px 0 rgba(255, 255, 255, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -256,7 +259,7 @@ overflow-x: hidden;
 
 .glass-input:focus {
   border-color: rgba(255, 215, 0, 0.5);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.2),
     0 0 0 3px rgba(255, 215, 0, 0.1),
     0 1px 0 rgba(255, 255, 255, 0.1);
@@ -264,35 +267,43 @@ overflow-x: hidden;
 
 /* Floating Math Symbols Animation */
 @keyframes float-math {
-  0%, 100% { 
+
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
     opacity: 0.1;
   }
-  25% { 
+
+  25% {
     transform: translateY(-20px) rotate(90deg);
     opacity: 0.3;
   }
-  50% { 
+
+  50% {
     transform: translateY(-40px) rotate(180deg);
     opacity: 0.2;
   }
-  75% { 
+
+  75% {
     transform: translateY(-20px) rotate(270deg);
     opacity: 0.3;
   }
 }
 
 @keyframes drift {
-  0% { 
+  0% {
     transform: translateX(0px) translateY(0px);
   }
-  33% { 
+
+  33% {
     transform: translateX(30px) translateY(-30px);
   }
-  66% { 
+
+  66% {
     transform: translateX(-20px) translateY(-60px);
   }
-  100% { 
+
+  100% {
     transform: translateX(0px) translateY(-80px);
   }
 }
@@ -306,11 +317,25 @@ overflow-x: hidden;
   user-select: none;
 }
 
-.math-symbol:nth-child(1) { animation-delay: 0s; }
-.math-symbol:nth-child(2) { animation-delay: 1s; }
-.math-symbol:nth-child(3) { animation-delay: 2s; }
-.math-symbol:nth-child(4) { animation-delay: 3s; }
-.math-symbol:nth-child(5) { animation-delay: 4s; }
+.math-symbol:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.math-symbol:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.math-symbol:nth-child(3) {
+  animation-delay: 2s;
+}
+
+.math-symbol:nth-child(4) {
+  animation-delay: 3s;
+}
+
+.math-symbol:nth-child(5) {
+  animation-delay: 4s;
+}
 
 /* Gradient Text */
 .gradient-text {
@@ -323,8 +348,65 @@ overflow-x: hidden;
 }
 
 @keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float-math-enhanced {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.3;
+  }
+
+  25% {
+    transform: translateY(-30px) rotate(90deg) scale(1.2);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translateY(-60px) rotate(180deg) scale(0.9);
+    opacity: 0.5;
+  }
+
+  75% {
+    transform: translateY(-30px) rotate(270deg) scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+.math-symbol-enhanced {
+  animation: float-math-enhanced 12s ease-in-out infinite;
+  position: absolute;
+  color: rgba(255, 215, 0, 0.6);
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+}
+
+/* Added proper gold color utilities for floating symbols */
+.text-gold {
+  color: #ffd700;
+}
+
+.text-gold\/10 {
+  color: rgba(255, 215, 0, 0.1);
+}
+
+.text-gold\/20 {
+  color: rgba(255, 215, 0, 0.2);
+}
+
+.text-gold\/30 {
+  color: rgba(255, 215, 0, 0.3);
 }
 
 /* Pulse Animation */
@@ -333,11 +415,56 @@ overflow-x: hidden;
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
   }
+
   50% {
     box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.pulse-glow-enhanced {
+  animation: pulse-glow-enhanced 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow-enhanced {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.2), inset 0 0 20px rgba(255, 215, 0, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 40px rgba(255, 215, 0, 0.2);
+  }
+}
+
+.commission-glow {
+  position: relative;
+}
+
+.commission-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: border-glow 3s linear infinite;
+}
+
+@keyframes border-glow {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
   }
 }
 
@@ -347,13 +474,16 @@ overflow-x: hidden;
     backdrop-filter: blur(15px);
     border-radius: 0.75rem;
   }
-  
+
   .enhanced-card {
     backdrop-filter: blur(15px);
     border-radius: 0.75rem;
   }
-  
-  .btn-primary, .btn-secondary, .btn-success, .btn-danger {
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-success,
+  .btn-danger {
     backdrop-filter: blur(15px);
   }
 }
@@ -367,8 +497,13 @@ overflow-x: hidden;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Smooth Transitions */

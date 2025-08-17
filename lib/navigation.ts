@@ -28,7 +28,7 @@ export const navigationPaths = {
 
   // Lender routes
   lender: {
-    dashboard: '/dashboard/lender',
+    dashboard: '/lender',
     products: '/lender/products',
     insights: '/lender/insights',
     payouts: '/lender/payouts',

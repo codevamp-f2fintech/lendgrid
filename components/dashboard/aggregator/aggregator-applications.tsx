@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Search, Plus, MoreHorizontal, Eye, Edit, Trash2, FileText, Clock, CheckCircle, XCircle, AlertCircle, Phone, Mail, MapPin, Calendar, DollarSign, Building2, User } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeleton'
+import { TablePagination } from '@/components/ui/pagination'
 
 const mockApplications = [
   {
@@ -162,6 +164,24 @@ export function AggregatorApplications() {
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
 
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [isTableLoading, setIsTableLoading] = useState(true)
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const tableTopRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsTableLoading(false)
+      setCardsLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchTerm, filterStatus, filterLender])
+
   const filteredApplications = mockApplications.filter(app => {
     const matchesSearch = app.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -169,6 +189,28 @@ export function AggregatorApplications() {
     const matchesLender = !filterLender || app.lenderName === filterLender
     return matchesSearch && matchesStatus && matchesLender
   })
+
+  const total = filteredApplications.length
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredApplications.slice(start, start + pageSize)
+  }, [filteredApplications, page, pageSize])
+
+  const handlePageChange = async (newPage: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPage(newPage)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+  const handlePageSizeChange = async (size: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPageSize(size)
+    setPage(1)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -288,31 +330,40 @@ export function AggregatorApplications() {
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">{stat.title}</p>
-                      <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
-                      <p className="text-green-400 text-sm mt-1">{stat.change} from last month</p>
+        {cardsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">{stat.title}</p>
+                        <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
+                        <p className="text-green-400 text-sm mt-1">{stat.change} from last month</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-gray-900/50 ${stat.color}`}>
+                        <stat.icon className="w-6 h-6" />
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-gray-900/50 ${stat.color}`}>
-                      <stat.icon className="w-6 h-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         {/* Filters */}
         <motion.div
@@ -371,110 +422,124 @@ export function AggregatorApplications() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div ref={tableTopRef} />
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-gray-700">
-                      <TableHead className="text-gray-300">Application</TableHead>
-                      <TableHead className="text-gray-300">Customer</TableHead>
-                      <TableHead className="text-gray-300">Loan Details</TableHead>
-                      <TableHead className="text-gray-300">Lender</TableHead>
-                      <TableHead className="text-gray-300">Status</TableHead>
-                      <TableHead className="text-gray-300">Commission</TableHead>
-                      <TableHead className="text-gray-300">Date</TableHead>
-                      <TableHead className="text-gray-300">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredApplications.map((application, index) => {
-                      const StatusIcon = getStatusIcon(application.status)
-                      return (
-                        <motion.tr
-                          key={application.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className="border-gray-700 hover:bg-gray-800/50"
-                        >
-                          <TableCell>
-                            <div>
-                              <p className="text-white font-medium">{application.id}</p>
-                              <p className="text-gray-400 text-sm">{application.loanType}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage src={application.avatar || "/placeholder.svg"} />
-                                <AvatarFallback className="bg-gray-800 text-gray-300 text-xs">
-                                  {application.customerName.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
+                {isTableLoading ? (
+                  <TableSkeleton columns={6} rows={pageSize} />
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-700">
+                        <TableHead className="text-gray-300">Application</TableHead>
+                        <TableHead className="text-gray-300">Customer</TableHead>
+                        <TableHead className="text-gray-300">Loan Details</TableHead>
+                        <TableHead className="text-gray-300">Lender</TableHead>
+                        <TableHead className="text-gray-300">Status</TableHead>
+                        <TableHead className="text-gray-300">Commission</TableHead>
+                        <TableHead className="text-gray-300">Date</TableHead>
+                        <TableHead className="text-gray-300">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginated.map((application, index) => {
+                        const StatusIcon = getStatusIcon(application.status)
+                        return (
+                          <motion.tr
+                            key={application.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                            className="border-gray-700 hover:bg-gray-800/50"
+                          >
+                            <TableCell>
                               <div>
-                                <p className="text-white font-medium">{application.customerName}</p>
-                                <p className="text-gray-400 text-sm">{application.customerEmail}</p>
+                                <p className="text-white font-medium">{application.id}</p>
+                                <p className="text-gray-400 text-sm">{application.loanType}</p>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="text-white font-medium">{formatCurrency(application.loanAmount)}</p>
-                              <p className="text-gray-400 text-sm">{application.loanType}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-300">{application.lenderName}</TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(application.status)}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {application.status.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="text-gold font-medium">{application.commissionRate}%</p>
-                              <p className="text-gray-400 text-sm">
-                                {application.expectedCommission > 0 ? formatCurrency(application.expectedCommission) : '-'}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-gray-400">
-                            {new Date(application.applicationDate).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-gray-400">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="bg-gray-900 border-gray-800">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedApplication(application)
-                                    setIsViewDialogOpen(true)
-                                  }}
-                                  className="text-gray-300"
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-gray-300">
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-400">
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </motion.tr>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="w-8 h-8">
+                                  <AvatarImage src={application.avatar || "/placeholder.svg"} />
+                                  <AvatarFallback className="bg-gray-800 text-gray-300 text-xs">
+                                    {application.customerName.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="text-white font-medium">{application.customerName}</p>
+                                  <p className="text-gray-400 text-sm">{application.customerEmail}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="text-white font-medium">{formatCurrency(application.loanAmount)}</p>
+                                <p className="text-gray-400 text-sm">{application.loanType}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-300">{application.lenderName}</TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(application.status)}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {application.status.replace('_', ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="text-gold font-medium">{application.commissionRate}%</p>
+                                <p className="text-gray-400 text-sm">
+                                  {application.expectedCommission > 0 ? formatCurrency(application.expectedCommission) : '-'}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-gray-400">
+                              {new Date(application.applicationDate).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-gray-400">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-gray-900 border-gray-800">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedApplication(application)
+                                      setIsViewDialogOpen(true)
+                                    }}
+                                    className="text-gray-300"
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-gray-300">
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-400">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </motion.tr>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
+
+              <TablePagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                className="mt-4"
+              />
             </CardContent>
           </Card>
         </motion.div>

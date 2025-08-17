@@ -182,8 +182,7 @@ export async function exportRevenueReport(options: {
         margin: { left: margin, right: margin },
     })
 
-    // Next Y
-    // @ts-expect-error types not updated
+    // @ts-expectError jspdf-autotable typing
     cursorY = (doc as any).lastAutoTable.finalY + 6
 
     // Transactions
@@ -280,7 +279,7 @@ export async function generateInvoicePDF(invoice: Invoice, fileName?: string) {
         margin: { left: margin, right: margin },
     })
 
-    // @ts-expect-error types not updated
+    // @ts-expecterror types not updated
     y = (doc as any).lastAutoTable.finalY + 6
 
     const { subTotal, tax, total } = calculateInvoiceTotals(invoice)

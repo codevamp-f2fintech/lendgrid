@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -14,23 +14,27 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
   Cell,
   AreaChart,
   Area
 } from 'recharts'
 import { Download, Calendar, TrendingUp, DollarSign, FileText, BarChart3, PieChartIcon, Activity, Target, Users, CreditCard } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { useToast } from '@/hooks/use-toast'
+import { exportRevenueReport } from '@/lib/exporter'
+import { ExportButton } from '@/components/ui/button-to-export'
+import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 
 const mockData = {
   performanceMetrics: [
@@ -39,7 +43,11 @@ const mockData = {
     { month: 'Mar', applications: 68, approvals: 54, disbursals: 51, commission: 127500 },
     { month: 'Apr', applications: 41, approvals: 33, disbursals: 31, commission: 77500 },
     { month: 'May', applications: 75, approvals: 60, disbursals: 57, commission: 142500 },
-    { month: 'Jun', applications: 89, approvals: 71, disbursals: 68, commission: 170000 }
+    { month: 'Jun', applications: 89, approvals: 71, disbursals: 68, commission: 170000 },
+    { month: 'Jul', applications: 85, approvals: 75, disbursals: 68, commission: 170000 },
+    { month: 'Aug', applications: 79, approvals: 61, disbursals: 68, commission: 170000 },
+    { month: 'Sep', applications: 92, approvals: 66, disbursals: 68, commission: 170000 },
+    { month: 'Oct', applications: 87, approvals: 77, disbursals: 68, commission: 170000 },
   ],
   loanTypeBreakdown: [
     { name: 'Personal Loan', value: 45, amount: 11250000, color: '#FFD700' },
@@ -106,6 +114,73 @@ export function AggregatorReports() {
   const [dateRange, setDateRange] = useState('6m')
   const [reportType, setReportType] = useState('performance')
 
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [isTableLoading, setIsTableLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+
+  const tableTopRef = useRef<HTMLDivElement | null>(null)
+  const chartRef = useRef<HTMLDivElement | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsTableLoading(false)
+      setCardsLoading(false)
+      setChartLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    setPage(1)
+  }, [])
+
+  // const paginated = useMemo(() => {
+  //   const start = (page - 1) * pageSize
+  //   return filteredRules.slice(start, start + pageSize)
+  // }, [page, pageSize])
+
+  const handlePageChange = async (newPage: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPage(newPage)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+  const handlePageSizeChange = async (size: number) => {
+    setIsTableLoading(true)
+    await new Promise((r) => setTimeout(r, 350))
+    setPageSize(size)
+    setPage(1)
+    setIsTableLoading(false)
+    tableTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  async function handleExport(format: "pdf" | "xlsx") {
+    try {
+      setExporting(true)
+      await exportRevenueReport({
+        format,
+        fileName: "revenue-report",
+        timeRange,
+        selectedMetric,
+        chartElement: chartRef.current ?? undefined,
+        metrics: mockData.metrics,
+        revenueData: mockData.revenueData,
+        lenderRevenue: mockData.lenderRevenue,
+        recentTransactions: mockData.recentTransactions,
+      })
+      toast({ title: "Export complete", description: `Saved ${format.toUpperCase()} report for ${timeRange}.` })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Export failed", description: err?.message ?? "Something went wrong." })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -142,42 +217,48 @@ export function AggregatorReports() {
                 <SelectItem value="1y">1 Year</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-gradient-to-r from-gold to-blue text-dark">
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
-            </Button>
+            <ExportButton onExport={handleExport} disabled={exporting} />
           </div>
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">{stat.title}</p>
-                      <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
-                      <p className="text-green-400 text-sm mt-1 flex items-center">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        {stat.change} from last period
-                      </p>
+        {cardsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="bg-gray-800/50 border-gray-700 hover:border-gold/50 transition-all duration-300 hover:shadow-lg hover:shadow-gold/10">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400">{stat.title}</p>
+                        <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
+                        <p className="text-green-400 text-sm mt-1 flex items-center">
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                          {stat.change} from last period
+                        </p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-gray-900/50 ${stat.color}`}>
+                        <stat.icon className="w-6 h-6" />
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-gray-900/50 ${stat.color}`}>
-                      <stat.icon className="w-6 h-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         {/* Report Tabs */}
         <motion.div
@@ -215,26 +296,30 @@ export function AggregatorReports() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ChartContainer
-                    config={{
-                      applications: { label: "Applications", color: "#007AFF" },
-                      approvals: { label: "Approvals", color: "#22c55e" },
-                      disbursals: { label: "Disbursals", color: "#FFD700" },
-                    }}
-                    className="h-96"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={mockData.performanceMetrics}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="applications" fill="#007AFF" name="Applications" radius={[2, 2, 0, 0]} />
-                        <Bar dataKey="approvals" fill="#22c55e" name="Approvals" radius={[2, 2, 0, 0]} />
-                        <Bar dataKey="disbursals" fill="#FFD700" name="Disbursals" radius={[2, 2, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+                  {chartLoading ? (
+                    <ChartSkeleton height={254} />
+                  ) : (
+                    <ChartContainer
+                      config={{
+                        applications: { label: "Applications", color: "#007AFF" },
+                        approvals: { label: "Approvals", color: "#22c55e" },
+                        disbursals: { label: "Disbursals", color: "#FFD700" },
+                      }}
+                      className="h-96"
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={mockData.performanceMetrics}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" />
+                          <YAxis stroke="#9CA3AF" />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="applications" fill="#007AFF" name="Applications" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="approvals" fill="#22c55e" name="Approvals" radius={[2, 2, 0, 0]} />
+                          <Bar dataKey="disbursals" fill="#FFD700" name="Disbursals" radius={[2, 2, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  )}
                 </CardContent>
               </Card>
 
@@ -313,7 +398,7 @@ export function AggregatorReports() {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <ChartTooltip 
+                          <ChartTooltip
                             content={({ active, payload }) => {
                               if (active && payload && payload.length) {
                                 const data = payload[0].payload
@@ -334,8 +419,8 @@ export function AggregatorReports() {
                       {mockData.loanTypeBreakdown.map((item) => (
                         <div key={item.name} className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
+                            <div
+                              className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: item.color }}
                             />
                             <span className="text-gray-300">{item.name}</span>
@@ -376,7 +461,7 @@ export function AggregatorReports() {
                           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                           <XAxis dataKey="month" stroke="#9CA3AF" />
                           <YAxis stroke="#9CA3AF" />
-                          <ChartTooltip 
+                          <ChartTooltip
                             content={({ active, payload, label }) => {
                               if (active && payload && payload.length) {
                                 return (
@@ -389,10 +474,10 @@ export function AggregatorReports() {
                               return null
                             }}
                           />
-                          <Area 
-                            type="monotone" 
-                            dataKey="commission" 
-                            stroke="#FFD700" 
+                          <Area
+                            type="monotone"
+                            dataKey="commission"
+                            stroke="#FFD700"
                             strokeWidth={3}
                             fill="url(#commissionGradient)"
                           />
@@ -427,7 +512,7 @@ export function AggregatorReports() {
                         <XAxis dataKey="month" stroke="#9CA3AF" />
                         <YAxis yAxisId="left" stroke="#9CA3AF" />
                         <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
-                        <ChartTooltip 
+                        <ChartTooltip
                           content={({ active, payload, label }) => {
                             if (active && payload && payload.length) {
                               return (
@@ -437,8 +522,8 @@ export function AggregatorReports() {
                                     <p key={index} style={{ color: entry.color }}>
                                       {entry.name}: {
                                         entry.dataKey === 'revenue' ? formatCurrency(entry.value as number) :
-                                        entry.dataKey === 'volume' ? formatCurrency(entry.value as number) :
-                                        entry.value
+                                          entry.dataKey === 'volume' ? formatCurrency(entry.value as number) :
+                                            entry.value
                                       }
                                     </p>
                                   ))}
@@ -448,27 +533,27 @@ export function AggregatorReports() {
                             return null
                           }}
                         />
-                        <Line 
+                        <Line
                           yAxisId="left"
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="#22c55e" 
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#22c55e"
                           strokeWidth={3}
                           dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
                         />
-                        <Line 
+                        <Line
                           yAxisId="right"
-                          type="monotone" 
-                          dataKey="volume" 
-                          stroke="#007AFF" 
+                          type="monotone"
+                          dataKey="volume"
+                          stroke="#007AFF"
                           strokeWidth={3}
                           dot={{ fill: '#007AFF', strokeWidth: 2, r: 4 }}
                         />
-                        <Line 
+                        <Line
                           yAxisId="left"
-                          type="monotone" 
-                          dataKey="customers" 
-                          stroke="#f97316" 
+                          type="monotone"
+                          dataKey="customers"
+                          stroke="#f97316"
                           strokeWidth={3}
                           dot={{ fill: '#f97316', strokeWidth: 2, r: 4 }}
                         />
