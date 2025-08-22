@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { TrendingUp, TrendingDown, Users, DollarSign, FileText, Target, AlertTriangle, CheckCircle } from 'lucide-react'
+import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 
 const monthlyData = [
   { month: 'Jan', applications: 120, approvals: 95, disbursals: 85, revenue: 2100000 },
@@ -48,6 +49,7 @@ const aggregatorPerformance = [
 
 export function LenderInsights() {
   const [timeRange, setTimeRange] = useState('6months')
+  const [cardsLoading, setCardsLoading] = useState(true)
 
   const totalApplications = productPerformance.reduce((sum, p) => sum + p.applications, 0)
   const totalApprovals = productPerformance.reduce((sum, p) => sum + p.approvals, 0)
@@ -55,6 +57,14 @@ export function LenderInsights() {
   const totalRevenue = productPerformance.reduce((sum, p) => sum + p.revenue, 0)
   const avgApprovalRate = (totalApprovals / totalApplications * 100).toFixed(1)
   const avgConversionRate = (totalDisbursals / totalApprovals * 100).toFixed(1)
+
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setCardsLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <DashboardLayout userRole="lender">
@@ -68,6 +78,7 @@ export function LenderInsights() {
           <div>
             <h1 className="text-3xl font-bold text-white">Business Insights</h1>
             <p className="text-gray-400 mt-1">Comprehensive analytics and performance metrics</p>
+
           </div>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-48 bg-gray-900/50 border-gray-800 text-white">
@@ -89,66 +100,92 @@ export function LenderInsights() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Applications</p>
-                  <p className="text-2xl font-bold text-white">{totalApplications}</p>
-                  <p className="text-green-500 text-sm flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    +12.5% vs last period
-                  </p>
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Applications</p>
+                    <p className="text-2xl font-bold text-white">{totalApplications}</p>
+                    <p className="text-green-500 text-sm flex items-center mt-1">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      +12.5% vs last period
+                    </p>
+                  </div>
+                  <FileText className="w-8 h-8 text-blue" />
                 </div>
-                <FileText className="w-8 h-8 text-blue" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Approval Rate</p>
-                  <p className="text-2xl font-bold text-white">{avgApprovalRate}%</p>
-                  <p className="text-green-500 text-sm flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    +3.2% vs last period
-                  </p>
+
+              </CardContent>
+            </Card>
+          )}
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={20} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Approval Rate</p>
+                    <p className="text-2xl font-bold text-white">{avgApprovalRate}%</p>
+                    <p className="text-green-500 text-sm flex items-center mt-1">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      +3.2% vs last period
+                    </p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Conversion Rate</p>
-                  <p className="text-2xl font-bold text-white">{avgConversionRate}%</p>
-                  <p className="text-red-500 text-sm flex items-center mt-1">
-                    <TrendingDown className="w-3 h-3 mr-1" />
-                    -1.8% vs last period
-                  </p>
+
+              </CardContent>
+            </Card>
+          )}
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Conversion Rate</p>
+                    <p className="text-2xl font-bold text-white">{avgConversionRate}%</p>
+                    <p className="text-red-500 text-sm flex items-center mt-1">
+                      <TrendingDown className="w-3 h-3 mr-1" />
+                      -1.8% vs last period
+                    </p>
+                  </div>
+                  <Target className="w-8 h-8 text-gold" />
                 </div>
-                <Target className="w-8 h-8 text-gold" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Revenue</p>
-                  <p className="text-2xl font-bold text-white">₹{(totalRevenue / 10000000).toFixed(1)}Cr</p>
-                  <p className="text-green-500 text-sm flex items-center mt-1">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    +18.7% vs last period
-                  </p>
+
+              </CardContent>
+            </Card>
+          )}
+
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Revenue</p>
+                    <p className="text-2xl font-bold text-white">₹{(totalRevenue / 10000000).toFixed(1)}Cr</p>
+                    <p className="text-green-500 text-sm flex items-center mt-1">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      +18.7% vs last period
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-blue" />
                 </div>
-                <DollarSign className="w-8 h-8 text-blue" />
-              </div>
-            </CardContent>
-          </Card>
+
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
 
         {/* Analytics Tabs */}
@@ -167,33 +204,41 @@ export function LenderInsights() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                 <Card className="bg-gray-900/50 border-gray-800">
+
                   <CardHeader>
                     <CardTitle className="text-white">Monthly Trends</CardTitle>
                     <CardDescription className="text-gray-400">Application and approval trends over time</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }} 
-                        />
-                        <Legend />
-                        <Line type="monotone" dataKey="applications" stroke="#3B82F6" strokeWidth={2} name="Applications" />
-                        <Line type="monotone" dataKey="approvals" stroke="#10B981" strokeWidth={2} name="Approvals" />
-                        <Line type="monotone" dataKey="disbursals" stroke="#F59E0B" strokeWidth={2} name="Disbursals" />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    {cardsLoading ? (
+                      <ChartSkeleton height={254} />
+                    ) :
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={monthlyData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" />
+                          <YAxis stroke="#9CA3AF" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#1F2937',
+                              border: '1px solid #374151',
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }}
+                          />
+                          <Legend />
+                          <Line type="monotone" dataKey="applications" stroke="#3B82F6" strokeWidth={2} name="Applications" />
+                          <Line type="monotone" dataKey="approvals" stroke="#10B981" strokeWidth={2} name="Approvals" />
+                          <Line type="monotone" dataKey="disbursals" stroke="#F59E0B" strokeWidth={2} name="Disbursals" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    }
                   </CardContent>
+
                 </Card>
 
                 <Card className="bg-gray-900/50 border-gray-800">
@@ -202,30 +247,35 @@ export function LenderInsights() {
                     <CardDescription className="text-gray-400">Monthly revenue progression</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }}
-                          formatter={(value) => [`₹${(value / 100000).toFixed(1)}L`, 'Revenue']}
-                        />
-                        <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fill="url(#colorRevenue)" />
-                        <defs>
-                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {cardsLoading ? (
+                      <ChartSkeleton height={254} />
+                    ) :
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={monthlyData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" />
+                          <YAxis stroke="#9CA3AF" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#1F2937',
+                              border: '1px solid #374151',
+                              borderRadius: '8px',
+                              color: '#F9FAFB'
+                            }}
+                            formatter={(value) => [`₹${(value / 100000).toFixed(1)}L`, 'Revenue']}
+                          />
+                          <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fill="url(#colorRevenue)" />
+                          <defs>
+                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    }
                   </CardContent>
+
                 </Card>
               </div>
             </TabsContent>
@@ -243,13 +293,13 @@ export function LenderInsights() {
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis dataKey="name" stroke="#9CA3AF" />
                         <YAxis stroke="#9CA3AF" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
                             border: '1px solid #374151',
                             borderRadius: '8px',
                             color: '#F9FAFB'
-                          }} 
+                          }}
                         />
                         <Legend />
                         <Bar dataKey="applications" fill="#3B82F6" name="Applications" />
@@ -282,9 +332,9 @@ export function LenderInsights() {
                             <Cell key={`cell-${index}`} fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][index % 4]} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
                             border: '1px solid #374151',
                             borderRadius: '8px',
                             color: '#F9FAFB'
@@ -300,6 +350,7 @@ export function LenderInsights() {
 
             <TabsContent value="customers" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                 <Card className="bg-gray-900/50 border-gray-800">
                   <CardHeader>
                     <CardTitle className="text-white">Customer Segments</CardTitle>
@@ -322,9 +373,9 @@ export function LenderInsights() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
                             border: '1px solid #374151',
                             borderRadius: '8px',
                             color: '#F9FAFB'
@@ -359,8 +410,11 @@ export function LenderInsights() {
             </TabsContent>
 
             <TabsContent value="risk" className="space-y-6">
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                 <Card className="bg-gray-900/50 border-gray-800">
+
                   <CardHeader>
                     <CardTitle className="text-white">Risk Distribution</CardTitle>
                     <CardDescription className="text-gray-400">Portfolio risk analysis</CardDescription>
@@ -373,9 +427,9 @@ export function LenderInsights() {
                           <span className="text-gray-400">{risk.count} ({risk.percentage}%)</span>
                         </div>
                         <div className="w-full bg-gray-800 rounded-full h-2">
-                          <div 
+                          <div
                             className="h-2 rounded-full transition-all duration-500"
-                            style={{ 
+                            style={{
                               width: `${risk.percentage}%`,
                               backgroundColor: risk.color
                             }}
@@ -412,6 +466,7 @@ export function LenderInsights() {
                   </CardContent>
                 </Card>
               </div>
+
             </TabsContent>
 
             <TabsContent value="aggregators" className="space-y-6">
@@ -453,7 +508,7 @@ export function LenderInsights() {
                         </div>
                         <div className="mt-3">
                           <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-gradient-to-r from-gold to-blue h-2 rounded-full transition-all duration-500"
                               style={{ width: `${aggregator.conversionRate}%` }}
                             ></div>

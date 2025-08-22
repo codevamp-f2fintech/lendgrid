@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Building2, TrendingUp, Users, CreditCard, Plus, Edit, Trash2, CheckCircle, XCircle, FileText } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { CardSkeleton, ChartSkeleton } from '@/components/ui/loading-skeleton'
 
 const mockData = {
   metrics: {
@@ -64,6 +65,17 @@ const mockData = {
 
 export function LenderDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('overview')
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const [chartsLoading, setChartsLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setChartsLoading(false)
+      setCardsLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -102,21 +114,21 @@ export function LenderDashboard() {
             <p className="text-gray-400 mt-1">Manage your loan products and track aggregator performance</p>
           </div>
           <div className="flex items-center space-x-4">
-            <Button 
+            <Button
               variant={selectedTab === 'overview' ? 'default' : 'outline'}
               onClick={() => setSelectedTab('overview')}
               className={selectedTab === 'overview' ? 'bg-blue text-white' : 'border-gray-600 text-gray-300'}
             >
               Overview
             </Button>
-            <Button 
+            <Button
               variant={selectedTab === 'products' ? 'default' : 'outline'}
               onClick={() => setSelectedTab('products')}
               className={selectedTab === 'products' ? 'bg-blue text-white' : 'border-gray-600 text-gray-300'}
             >
               Products
             </Button>
-            <Button 
+            <Button
               variant={selectedTab === 'aggregators' ? 'default' : 'outline'}
               onClick={() => setSelectedTab('aggregators')}
               className={selectedTab === 'aggregators' ? 'bg-blue text-white' : 'border-gray-600 text-gray-300'}
@@ -129,36 +141,45 @@ export function LenderDashboard() {
         {selectedTab === 'overview' && (
           <>
             {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <MetricCard
-                title="Total Products"
-                value={mockData.metrics.totalProducts}
-                icon={CreditCard}
-                color="bg-blue/20 text-blue"
-                subtitle="8 active products"
-              />
-              <MetricCard
-                title="Active Aggregators"
-                value={mockData.metrics.activeAggregators}
-                icon={Users}
-                color="bg-green-500/20 text-green-400"
-                subtitle="+5 this month"
-              />
-              <MetricCard
-                title="Monthly Applications"
-                value={mockData.metrics.monthlyApplications}
-                icon={FileText}
-                color="bg-gold/20 text-gold"
-                subtitle="78% approval rate"
-              />
-              <MetricCard
-                title="Commission Paid"
-                value={formatCurrency(mockData.metrics.totalCommissionPaid)}
-                icon={TrendingUp}
-                color="bg-purple-500/20 text-purple-400"
-                subtitle="This month"
-              />
-            </div>
+            {cardsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <CardSkeleton headerLines={2} bodyHeight={20} />
+                <CardSkeleton headerLines={2} bodyHeight={20} />
+                <CardSkeleton headerLines={2} bodyHeight={20} />
+                <CardSkeleton headerLines={2} bodyHeight={20} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <MetricCard
+                  title="Total Products"
+                  value={mockData.metrics.totalProducts}
+                  icon={CreditCard}
+                  color="bg-blue/20 text-blue"
+                  subtitle="8 active products"
+                />
+                <MetricCard
+                  title="Active Aggregators"
+                  value={mockData.metrics.activeAggregators}
+                  icon={Users}
+                  color="bg-green-500/20 text-green-400"
+                  subtitle="+5 this month"
+                />
+                <MetricCard
+                  title="Monthly Applications"
+                  value={mockData.metrics.monthlyApplications}
+                  icon={FileText}
+                  color="bg-gold/20 text-gold"
+                  subtitle="78% approval rate"
+                />
+                <MetricCard
+                  title="Commission Paid"
+                  value={formatCurrency(mockData.metrics.totalCommissionPaid)}
+                  icon={TrendingUp}
+                  color="bg-purple-500/20 text-purple-400"
+                  subtitle="This month"
+                />
+              </div>
+            )}
 
             {/* Charts */}
             <div className="grid lg:grid-cols-2 gap-6">
@@ -170,24 +191,28 @@ export function LenderDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={mockData.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#1F2937', 
-                            border: '1px solid #374151',
-                            borderRadius: '8px'
-                          }}
-                        />
-                        <Bar dataKey="applications" fill="#007AFF" name="Applications" />
-                        <Bar dataKey="approvals" fill="#FFD700" name="Approvals" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {chartsLoading ? (
+                    <ChartSkeleton height={254} />
+                  ) :
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={mockData.chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" />
+                          <YAxis stroke="#9CA3AF" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#1F2937',
+                              border: '1px solid #374151',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Bar dataKey="applications" fill="#007AFF" name="Applications" />
+                          <Bar dataKey="approvals" fill="#FFD700" name="Approvals" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  }
                 </CardContent>
               </Card>
 
@@ -199,27 +224,33 @@ export function LenderDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {mockData.aggregatorPerformance.slice(0, 4).map((aggregator, index) => (
-                      <div key={aggregator.name} className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold">
-                            {index + 1}
+                  {cardsLoading ? (
+                    <CardSkeleton headerLines={2} bodyHeight={286} />
+                  ) :
+                    <div className="space-y-4">
+                      {mockData.aggregatorPerformance.slice(0, 4).map((aggregator, index) => (
+                        <div key={aggregator.name} className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-white">{aggregator.name}</p>
+                              <p className="text-sm text-gray-400">{aggregator.applications} applications</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-white">{aggregator.name}</p>
-                            <p className="text-sm text-gray-400">{aggregator.applications} applications</p>
+                          <div className="text-right">
+                            <p className="text-green-400 font-semibold">{aggregator.approvalRate}%</p>
+                            <p className="text-sm text-gray-400">{formatCurrency(aggregator.commission)}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-green-400 font-semibold">{aggregator.approvalRate}%</p>
-                          <p className="text-sm text-gray-400">{formatCurrency(aggregator.commission)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  }
                 </CardContent>
+
               </Card>
+
             </div>
           </>
         )}
@@ -263,7 +294,7 @@ export function LenderDashboard() {
                         <TableCell className="text-gold">{product.commissionPercent}%</TableCell>
                         <TableCell className="text-white">{product.applications}</TableCell>
                         <TableCell>
-                          <Badge 
+                          <Badge
                             variant={product.isActive ? 'default' : 'secondary'}
                             className={product.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}
                           >
@@ -317,13 +348,13 @@ export function LenderDashboard() {
                         <TableCell className="text-green-400">{aggregator.approvalRate}%</TableCell>
                         <TableCell className="text-white">{formatCurrency(aggregator.commission)}</TableCell>
                         <TableCell>
-                          <Badge 
+                          <Badge
                             className={
-                              aggregator.approvalRate >= 80 
-                                ? 'bg-green-500/20 text-green-400' 
-                                : aggregator.approvalRate >= 70 
-                                ? 'bg-gold/20 text-gold' 
-                                : 'bg-red-500/20 text-red-400'
+                              aggregator.approvalRate >= 80
+                                ? 'bg-green-500/20 text-green-400'
+                                : aggregator.approvalRate >= 70
+                                  ? 'bg-gold/20 text-gold'
+                                  : 'bg-red-500/20 text-red-400'
                             }
                           >
                             {aggregator.approvalRate >= 80 ? 'Excellent' : aggregator.approvalRate >= 70 ? 'Good' : 'Needs Improvement'}
