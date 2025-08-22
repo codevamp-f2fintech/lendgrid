@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Calendar, Search, Filter, Download, Send, Clock, CheckCircle, XCircle, AlertCircle, DollarSign, TrendingUp, FileText } from 'lucide-react'
 import { format } from 'date-fns'
+import { CardSkeleton } from '@/components/ui/loading-skeleton'
 
 const mockPayouts = [
   {
@@ -113,10 +114,11 @@ export function LenderPayouts() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false)
   const [selectedPayout, setSelectedPayout] = useState(null)
+  const [cardsLoading, setCardsLoading] = useState(true)
 
   const filteredPayouts = mockPayouts.filter(payout => {
     const matchesSearch = payout.aggregatorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payout.id.toLowerCase().includes(searchTerm.toLowerCase())
+      payout.id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesFilter = filterStatus === 'all' || payout.status === filterStatus
     return matchesSearch && matchesFilter
   })
@@ -145,6 +147,13 @@ export function LenderPayouts() {
   const completedPayouts = mockPayouts.filter(p => p.status === 'completed').length
   const pendingPayouts = mockPayouts.filter(p => p.status === 'pending').length
   const totalAmount = mockPayouts.reduce((sum, p) => sum + p.amount, 0)
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setCardsLoading(false)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <DashboardLayout userRole="lender">
@@ -233,50 +242,75 @@ export function LenderPayouts() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Payouts</p>
-                  <p className="text-2xl font-bold text-white">{totalPayouts}</p>
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Payouts</p>
+                    <p className="text-2xl font-bold text-white">{totalPayouts}</p>
+                  </div>
+                  <FileText className="w-8 h-8 text-blue" />
                 </div>
-                <FileText className="w-8 h-8 text-blue" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Completed</p>
-                  <p className="text-2xl font-bold text-white">{completedPayouts}</p>
+
+              </CardContent>
+            </Card>
+          )}
+
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Completed</p>
+                    <p className="text-2xl font-bold text-white">{completedPayouts}</p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Pending</p>
-                  <p className="text-2xl font-bold text-white">{pendingPayouts}</p>
+              </CardContent>
+
+            </Card>
+          )}
+
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Pending</p>
+                    <p className="text-2xl font-bold text-white">{pendingPayouts}</p>
+                  </div>
+                  <Clock className="w-8 h-8 text-yellow-500" />
                 </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Amount</p>
-                  <p className="text-2xl font-bold text-white">₹{(totalAmount / 100000).toFixed(1)}L</p>
+              </CardContent>
+
+            </Card>
+          )}
+          {cardsLoading ? (
+            <CardSkeleton headerLines={2} bodyHeight={16} />
+          ) : (
+            <Card className="bg-gray-900/50 border-gray-800">
+
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Amount</p>
+                    <p className="text-2xl font-bold text-white">₹{(totalAmount / 100000).toFixed(1)}L</p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-gold" />
                 </div>
-                <DollarSign className="w-8 h-8 text-gold" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+
+            </Card>
+          )}
         </motion.div>
 
         {/* Payout Tabs */}
@@ -328,50 +362,54 @@ export function LenderPayouts() {
                     transition={{ delay: 0.1 * index }}
                   >
                     <Card className="bg-gray-900/50 border-gray-800 hover:border-gray-700 transition-colors">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-white font-semibold">{payout.id}</h3>
-                              <Badge className={getStatusColor(payout.status)}>
-                                {getStatusIcon(payout.status)}
-                                <span className="ml-1 capitalize">{payout.status}</span>
-                              </Badge>
+                      {cardsLoading ? (
+                        <CardSkeleton headerLines={1} bodyHeight={10} />
+                      ) :
+                        <CardContent className="p-6">
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-white font-semibold">{payout.id}</h3>
+                                <Badge className={getStatusColor(payout.status)}>
+                                  {getStatusIcon(payout.status)}
+                                  <span className="ml-1 capitalize">{payout.status}</span>
+                                </Badge>
+                              </div>
+                              <p className="text-gray-400 text-sm mb-1">{payout.aggregatorName}</p>
+                              <p className="text-gray-500 text-xs">
+                                Requested: {format(new Date(payout.requestDate), 'MMM dd, yyyy')}
+                                {payout.processedDate && (
+                                  <span> • Processed: {format(new Date(payout.processedDate), 'MMM dd, yyyy')}</span>
+                                )}
+                              </p>
                             </div>
-                            <p className="text-gray-400 text-sm mb-1">{payout.aggregatorName}</p>
-                            <p className="text-gray-500 text-xs">
-                              Requested: {format(new Date(payout.requestDate), 'MMM dd, yyyy')}
-                              {payout.processedDate && (
-                                <span> • Processed: {format(new Date(payout.processedDate), 'MMM dd, yyyy')}</span>
-                              )}
-                            </p>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-400">Amount</p>
+                                <p className="text-white font-semibold">₹{payout.amount.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Commission</p>
+                                <p className="text-white font-semibold">₹{payout.commissionAmount.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Applications</p>
+                                <p className="text-white font-semibold">{payout.applications}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400">Method</p>
+                                <p className="text-white font-semibold">{payout.paymentMethod}</p>
+                              </div>
+                            </div>
+                            {payout.utrNumber && (
+                              <div className="lg:text-right">
+                                <p className="text-gray-400 text-xs">UTR Number</p>
+                                <p className="text-white text-sm font-mono">{payout.utrNumber}</p>
+                              </div>
+                            )}
                           </div>
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-400">Amount</p>
-                              <p className="text-white font-semibold">₹{payout.amount.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-400">Commission</p>
-                              <p className="text-white font-semibold">₹{payout.commissionAmount.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-400">Applications</p>
-                              <p className="text-white font-semibold">{payout.applications}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-400">Method</p>
-                              <p className="text-white font-semibold">{payout.paymentMethod}</p>
-                            </div>
-                          </div>
-                          {payout.utrNumber && (
-                            <div className="lg:text-right">
-                              <p className="text-gray-400 text-xs">UTR Number</p>
-                              <p className="text-white text-sm font-mono">{payout.utrNumber}</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
+                        </CardContent>
+                      }
                     </Card>
                   </motion.div>
                 ))}
@@ -379,42 +417,47 @@ export function LenderPayouts() {
             </TabsContent>
 
             <TabsContent value="upcoming" className="space-y-6">
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white">Scheduled Payouts</CardTitle>
-                  <CardDescription className="text-gray-400">Upcoming commission payments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {upcomingPayouts.map((payout, index) => (
-                      <motion.div
-                        key={payout.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h4 className="text-white font-medium">{payout.aggregatorName}</h4>
-                            <Badge variant="outline" className="border-gold text-gold">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              Due {format(new Date(payout.dueDate), 'MMM dd')}
-                            </Badge>
+              {cardsLoading ? (
+                <CardSkeleton headerLines={1} bodyHeight={10} />
+              ) :
+                <Card className="bg-gray-900/50 border-gray-800">
+
+                  <CardHeader>
+                    <CardTitle className="text-white">Scheduled Payouts</CardTitle>
+                    <CardDescription className="text-gray-400">Upcoming commission payments</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {upcomingPayouts.map((payout, index) => (
+                        <motion.div
+                          key={payout.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-1">
+                              <h4 className="text-white font-medium">{payout.aggregatorName}</h4>
+                              <Badge variant="outline" className="border-gold text-gold">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                Due {format(new Date(payout.dueDate), 'MMM dd')}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-400 text-sm">{payout.applications} applications • ₹{payout.commissionAmount.toLocaleString()} commission</p>
                           </div>
-                          <p className="text-gray-400 text-sm">{payout.applications} applications • ₹{payout.commissionAmount.toLocaleString()} commission</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white font-bold text-lg">₹{payout.amount.toLocaleString()}</p>
-                          <Button size="sm" className="mt-2 bg-gradient-to-r from-gold to-blue text-dark">
-                            Process Now
-                          </Button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                          <div className="text-right">
+                            <p className="text-white font-bold text-lg">₹{payout.amount.toLocaleString()}</p>
+                            <Button size="sm" className="mt-2 bg-gradient-to-r from-gold to-blue text-dark">
+                              Process Now
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              }
             </TabsContent>
           </Tabs>
         </motion.div>
