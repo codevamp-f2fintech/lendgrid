@@ -72,6 +72,7 @@ export const usersApi = {
         contact: string;
         photoUrl: string;
         omsUserId?: string | null;
+        createdAt?: string;
       };
     }>({
       query: `
@@ -86,6 +87,7 @@ export const usersApi = {
               contact
               photoUrl
               omsUserId
+              createdAt
             }
           }
         `,

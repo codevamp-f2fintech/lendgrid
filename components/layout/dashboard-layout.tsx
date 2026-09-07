@@ -490,9 +490,22 @@ function AppSidebar({
                 align="end"
                 sideOffset={4}
               >
+                {/* My Profile — only visible for super admin */}
+                {userRole === "super_admin" && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => router.push(navigationPaths.superAdmin.settings)}
+                      className="cursor-pointer"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      My Profile
+                    </DropdownMenuItem>
+                    <Separator className="my-1" />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-destructive"
+                  className="text-destructive cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
