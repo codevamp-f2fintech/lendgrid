@@ -9,7 +9,7 @@ export function AggregatorMemberApplications() {
   const [activeTab, setActiveTab] = useState<'applications' | 'tickets'>('applications')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0 max-w-full">
       <ApplicationTicketsTabs
         activeTab={activeTab}
         onChange={setActiveTab}

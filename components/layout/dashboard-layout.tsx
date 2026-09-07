@@ -681,7 +681,7 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
         isOmsEnabled={isOmsEnabled}
       />
 
-      <SidebarInset className="w-full h-full bg-background !p-0 !m-0">
+      <SidebarInset className="w-full min-w-0 max-w-full h-full bg-background !p-0 !m-0 overflow-x-hidden">
         <header className="professional-header flex h-16 items-center gap-2 px-4 sticky top-0 z-50">
           <SidebarTrigger className="-ml-1" />
 
@@ -904,7 +904,7 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 w-full min-h-screen bg-background !p-4">
+        <main className="flex-1 w-full min-w-0 max-w-full min-h-screen bg-background !p-4 overflow-x-hidden">
           {children}
         </main>
       </SidebarInset>

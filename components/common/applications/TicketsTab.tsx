@@ -437,46 +437,40 @@ const ApplicationTableRow = ({ application, index, onView, onDelete, onStatusCli
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 className={`border-border hover:bg-card/50 transition-colors ${isExpanded ? 'bg-card/30' : ''}`}
             >
-                <TableCell>
-                    <div className="flex items-center gap-2">
-                        <p className="font-medium">F2FIN-{application.ticketId}</p>
-                    </div>
+                <TableCell className="whitespace-nowrap font-medium">
+                    F2FIN-{application.ticketId}
                 </TableCell>
                 <TableCell>
-                    <div className="flex items-center space-x-3">
-                        <Avatar className="w-8 h-8">
+                    <div className="flex items-center space-x-3 min-w-[180px]">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
                             <AvatarImage src={application.avatar || "/placeholder.svg"} />
                             <AvatarFallback className="bg-card text-foreground text-xs">
                                 {application.customerName.split(' ').map((n: string) => n[0]).join('')}
                             </AvatarFallback>
                         </Avatar>
-                        <div>
-                            <p className=" text-foreground font-medium">{application.customerName}</p>
-                            <p className=" text-muted-foreground text-sm">{application.customerEmail}</p>
+                        <div className="min-w-0 max-w-[200px]">
+                            <p className="text-foreground font-medium truncate" title={application.customerName}>{application.customerName}</p>
+                            <p className="text-muted-foreground text-sm truncate" title={application.customerEmail}>{application.customerEmail}</p>
                         </div>
                     </div>
                 </TableCell>
-                <TableCell>
-                    <div>
-                        <p className=" text-foreground font-medium">{formatCurrency(application.applicationAmount)}</p>
-                    </div>
+                <TableCell className="whitespace-nowrap">
+                    <p className="text-foreground font-medium">{formatCurrency(application.applicationAmount)}</p>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
+                <TableCell className="hidden lg:table-cell whitespace-nowrap">
                     <Badge variant="outline" className="text-xs border-primary/30 text-primary">
                         <FileText className="w-3 h-3 mr-1" />
                         {application.loanCategory || 'N/A'}
                     </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell whitespace-nowrap">
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                         <Phone className="w-3 h-3" />
                         <span className="text-foreground">{application.customerContact || 'N/A'}</span>
                     </div>
                 </TableCell>
-                <TableCell>
-                    <div>
-                        <p className=" text-foreground font-medium">{application.applicationProvider}</p>
-                    </div>
+                <TableCell className="whitespace-nowrap">
+                    <p className="text-foreground font-medium">{application.applicationProvider}</p>
                 </TableCell>
                 <TableCell className="hidden xl:table-cell">
                     <div className="flex items-center gap-1.5 text-sm truncate max-w-[150px]" title={`${application.customerLocation}, ${application.customerState}`}>
@@ -720,6 +714,14 @@ export function TicketsTab() {
         return () => window.removeEventListener('companyChanged', handleCompanyChange)
     }, [])
 
+    const roleLower = String(decoded?.role || user?.role || '').toLowerCase();
+    const isSalesUser = (decoded?.source === 'oms' && roleLower === 'sales') || roleLower === 'sales' || roleLower === 'lendgrid_sales';
+    const isAggregatorMember = roleLower === 'aggregator_member';
+
+    const effectiveSalesUserId = isSalesUser
+        ? (decoded?.id ?? decoded?.userId ?? decoded?.sub ?? decoded?.salesUserId ?? decoded?.user_id ?? user?.omsUserId ?? user?.id)
+        : (isAggregatorMember ? (decoded?.id || decoded?.sub || user?._id || user?.id) : undefined);
+
     // Fetch tickets New (REST + SWR), using f2fintech-admin-server api
     const {
         value: ticketsData,
@@ -733,7 +735,7 @@ export function TicketsTab() {
         dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : null,
         dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : null,
         companyIdOverride || undefined,
-        (decoded?.source === 'oms' && decoded?.role?.toLowerCase() === 'sales') || decoded?.role?.toLowerCase() === 'aggregator_member' ? (decoded?.id || decoded?.sub) : undefined,
+        effectiveSalesUserId,
         filterStatus,
         filterLender
     )
@@ -1000,8 +1002,8 @@ export function TicketsTab() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-6" ref={tableTopRef}>
+        <div className="space-y-6 w-full min-w-0 max-w-full">
+            <div className="flex flex-col gap-6 w-full min-w-0" ref={tableTopRef}>
                 <div className="flex justify-between items-center bg-card/50 p-4 border border-border rounded-xl">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -1091,26 +1093,26 @@ export function TicketsTab() {
                     isExporting={isExporting}
                 />
 
-                <Card className="border-border bg-card/50">
-                    <CardContent className="p-0">
+                <Card className="border-border bg-card/50 w-full min-w-0 max-w-full overflow-hidden">
+                    <CardContent className="p-0 w-full min-w-0">
                         {/* CONDITIONAL RENDERING: TABLE OR GRID */}
                         {viewMode === 'table' ? (
-                            <div className="overflow-x-auto professional-table">
+                            <div className="overflow-x-auto professional-table w-full min-w-0">
                                 {isTableLoading ? (
                                     <TableSkeleton columns={6} rows={pageSize} />
                                 ) : (
                                     <Table>
                                         <TableHeader className="bg-muted border-b-2 border-border">
                                             <TableRow>
-                                                <TableHead>Ticket ID</TableHead>
-                                                <TableHead>Customer</TableHead>
-                                                <TableHead>Loan Amount</TableHead>
-                                                <TableHead className="hidden lg:table-cell">Product Type</TableHead>
-                                                <TableHead className="hidden md:table-cell">Contact</TableHead>
-                                                <TableHead>Lender</TableHead>
-                                                <TableHead className="hidden xl:table-cell">Location</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead className="text-center">Actions</TableHead>
+                                                <TableHead className="whitespace-nowrap">Ticket ID</TableHead>
+                                                <TableHead className="whitespace-nowrap">Customer</TableHead>
+                                                <TableHead className="whitespace-nowrap">Loan Amount</TableHead>
+                                                <TableHead className="hidden lg:table-cell whitespace-nowrap">Product Type</TableHead>
+                                                <TableHead className="hidden md:table-cell whitespace-nowrap">Contact</TableHead>
+                                                <TableHead className="whitespace-nowrap">Lender</TableHead>
+                                                <TableHead className="hidden xl:table-cell whitespace-nowrap">Location</TableHead>
+                                                <TableHead className="whitespace-nowrap">Status</TableHead>
+                                                <TableHead className="text-center whitespace-nowrap">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>

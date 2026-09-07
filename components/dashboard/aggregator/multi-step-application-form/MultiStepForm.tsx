@@ -86,8 +86,11 @@ export const MultiStepFormContent: React.FC<{
     const decoded = decodeJwt(token)
     // Guest mode: use prop directly; authenticated mode: read from JWT
     const isOmsEnabled = guestIsOmsEnabled ?? (decoded?.isOmsEnabled ?? false)
+    const roleLower = String(decoded?.role || '').toLowerCase()
     const isOmsSalesSession =
-        decoded?.source === 'oms' && String(decoded?.role || '').toLowerCase() === 'sales';
+        decoded?.source === 'oms' ||
+        roleLower === 'sales' ||
+        roleLower === 'lendgrid_sales'
     const omsSalesUserId =
         decoded?.id ??
         decoded?.userId ??
@@ -569,8 +572,7 @@ export const MultiStepFormContent: React.FC<{
                     }))
                 ),
                 case_type: formData.caseType || 'fresh',
-                is_picked: isOmsEnabled ? 0 : 1,
-                source: guestSource || (isOmsSalesSession ? 'oms' : 'lendgrid'),
+                source: 'lendgrid',
                 ...(resolvedCompanyId ? { company_id: Number(resolvedCompanyId) } : {}),
                 ...(isOmsSalesSession && omsSalesUserId
                     ? { applied_by: Number(omsSalesUserId) }
@@ -580,34 +582,34 @@ export const MultiStepFormContent: React.FC<{
             };
 
             const applicationId = await createApplication(applicationPayload);
-            
+
             // Clear localStorage immediately after successful application creation
             // This ensures form data is cleared even if subsequent API calls fail
             localStorage.removeItem('activeStep');
             localStorage.removeItem('loanFormCustomerId');
             localStorage.removeItem('loanFormAppNumber');
             localStorage.removeItem('loanFormData');
-            
+
             // Reset form context state and local UI state
             resetForm();
             setShowStep0(true);
             setCompletedSteps([]);
             setSkippedSteps([]);
-            
+
             await createLoanTracking(applicationId);
 
-            // Create ticket only if OMS is NOT enabled (matches Step 1's original guard)
-            if (!isOmsEnabled) {
-                await fetch(`${process.env.NEXT_PUBLIC_ADMIN_URL}/create-ticket`, {
-                    method: 'POST',
-                    headers: commonHeaders,
-                    body: JSON.stringify({
-                        customer_application_id: applicationId,
-                        user_id: resolvedCompanyId,
-                        status: 'operations',
-                    }),
-                });
-            }
+            // Create ticket only if OMS is NOT enabled and NOT an OMS/sales session (matches Step 1's original guard)
+            // if (!isOmsEnabled && !isOmsSalesSession) {
+            //     await fetch(`${process.env.NEXT_PUBLIC_ADMIN_URL}/create-ticket`, {
+            //         method: 'POST',
+            //         headers: commonHeaders,
+            //         body: JSON.stringify({
+            //             customer_application_id: applicationId,
+            //             user_id: resolvedCompanyId,
+            //             status: 'operations',
+            //         }),
+            //     });
+            // }
 
             if (onSuccess) {
                 onSuccess();
