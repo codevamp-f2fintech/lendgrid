@@ -66,7 +66,6 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { navigationPaths } from "@/lib/navigation";
-import { getCookie, decodeJwt } from "@/lib/utils";
 import { ThemeLogo } from "@/components/theme-logo";
 import { companiesApi, type Company } from "@/lib/companies-api";
 import {
@@ -76,6 +75,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { decodeJwt } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -146,7 +146,7 @@ const navigationConfig = {
       ],
     },
   ],
-  aggregator: (isOmsEnabled: boolean) => [
+  aggregator: [
     {
       title: "Overview",
       items: [
@@ -299,7 +299,6 @@ const navigationConfig = {
 function AppSidebar({
   userRole,
   user,
-  isOmsEnabled,
 }: {
   userRole:
   | "super_admin"
@@ -309,19 +308,12 @@ function AppSidebar({
   | "hrms_employee"
   | "lendgrid_sales";
   user?: any;
-  isOmsEnabled?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const logout = useLogout();
   const { setOpenMobile } = useSidebar();
-  let navigation;
-
-  if (userRole === "aggregator") {
-    navigation = navigationConfig.aggregator(isOmsEnabled!);
-  } else {
-    navigation = navigationConfig[userRole];
-  }
+  const navigation = navigationConfig[userRole];
 
   const handleLogout = () => {
     if (userRole === "hrms_employee") {
@@ -556,10 +548,6 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
             : role === "lendgrid_sales"
               ? "lendgrid_sales"
               : "lender";
-  const token = getCookie("lendgrid_cookie");
-  const decoded = decodeJwt(token);
-  const isOmsEnabled = decoded?.isOmsEnabled ?? false;
-
   const employeeUser =
     isEmployeeSession && decodedEmployee
       ? {
@@ -577,26 +565,20 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (!isSalesRole) return;
-    
-    if (isOmsEnabled) {
-      setSelectedCompanyId("101");
-      localStorage.setItem("selectedCompanyId", "101");
-      window.dispatchEvent(new CustomEvent("companyChanged", { detail: "101" }));
-    } else {
-      const saved = localStorage.getItem("selectedCompanyId") || "";
-      setSelectedCompanyId(saved);
-    }
+
+    setSelectedCompanyId("101");
+    localStorage.setItem("selectedCompanyId", "101");
+    window.dispatchEvent(new CustomEvent("companyChanged", { detail: "101" }));
 
     companiesApi
       .getAll({ page: 1, limit: 100 })
       .then((res) => setCompanies(res.data?.results || []))
       .catch(console.error);
-  }, [isSalesRole, isOmsEnabled]);
+  }, [isSalesRole]);
 
   const handleCompanyChange = (value: string) => {
-    if (isOmsEnabled) return;
     setSelectedCompanyId(value);
-    if (!value) {
+    if (!value || value === "all") {
       localStorage.removeItem("selectedCompanyId");
     } else {
       localStorage.setItem("selectedCompanyId", value);
@@ -687,7 +669,6 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
       <AppSidebar
         userRole={userRole ?? normalizedRole}
         user={isEmployeeSession ? employeeUser : user}
-        isOmsEnabled={isOmsEnabled}
       />
 
       <SidebarInset className="w-full min-w-0 max-w-full h-full bg-background !p-0 !m-0 overflow-x-hidden">
@@ -699,7 +680,6 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
               <Select
                 value={selectedCompanyId}
                 onValueChange={handleCompanyChange}
-                disabled={isOmsEnabled}
               >
                 <SelectTrigger className="w-52 h-9 bg-background/50 border-border text-foreground text-sm">
                   <SelectValue placeholder="Select Aggregator..." />
