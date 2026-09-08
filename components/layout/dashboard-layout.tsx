@@ -577,15 +577,24 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
 
   useEffect(() => {
     if (!isSalesRole) return;
-    const saved = localStorage.getItem("selectedCompanyId") || "";
-    setSelectedCompanyId(saved);
+    
+    if (isOmsEnabled) {
+      setSelectedCompanyId("101");
+      localStorage.setItem("selectedCompanyId", "101");
+      window.dispatchEvent(new CustomEvent("companyChanged", { detail: "101" }));
+    } else {
+      const saved = localStorage.getItem("selectedCompanyId") || "";
+      setSelectedCompanyId(saved);
+    }
+
     companiesApi
       .getAll({ page: 1, limit: 100 })
       .then((res) => setCompanies(res.data?.results || []))
       .catch(console.error);
-  }, [isSalesRole]);
+  }, [isSalesRole, isOmsEnabled]);
 
   const handleCompanyChange = (value: string) => {
+    if (isOmsEnabled) return;
     setSelectedCompanyId(value);
     if (!value) {
       localStorage.removeItem("selectedCompanyId");
@@ -690,6 +699,7 @@ export function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
               <Select
                 value={selectedCompanyId}
                 onValueChange={handleCompanyChange}
+                disabled={isOmsEnabled}
               >
                 <SelectTrigger className="w-52 h-9 bg-background/50 border-border text-foreground text-sm">
                   <SelectValue placeholder="Select Aggregator..." />
