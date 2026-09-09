@@ -76,7 +76,6 @@ const tenureOptions = {
 };
 
 const leadTypeOptions = [
-    { value: 'null', label: 'Null' },
     { value: 'notion', label: 'Notion' },
     { value: 'dialler', label: 'Dialler' },
     { value: 'field visit', label: 'Field Visit' },
@@ -107,7 +106,7 @@ export const Step0Form: React.FC<Step0FormProps> = ({ providers, onSubmit }) => 
             loanType: formData.loanType || '',
             loanCategory: formData.loanCategory || '',
             tenure: formData.tenure || '',
-            leadType: formData.leadType || 'null',
+            leadType: formData.leadType || '',
             providers: formData.providers || [],
             providerAmounts: formData.providerAmounts || [],
             existingLoans: formData.existingLoans || [{ hasRunningLoans: '', whichLoan: '', loanAmount: '', runningEmi: '' }],
@@ -357,6 +356,45 @@ export const Step0Form: React.FC<Step0FormProps> = ({ providers, onSubmit }) => 
                         <p className="text-sm text-red-400 mt-1.5 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
                             {errors.tenure.message}
+                        </p>
+                    )}
+                </div>
+
+                {/* Lead Type */}
+                <div>
+                    <Label className="text-foreground flex items-center gap-2">
+                        Lead Type
+                        <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                    </Label>
+                    <Controller
+                        control={control}
+                        name="leadType"
+                        render={({ field }) => (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className="bg-card border-border text-foreground mt-2">
+                                    <div className="flex items-center">
+                                        <Building2 className="w-4 h-4 mr-2" />
+                                        <SelectValue placeholder="Select lead type (optional)" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover border-border text-popover-foreground">
+                                    {leadTypeOptions.map((lead) => (
+                                        <SelectItem
+                                            key={lead.value}
+                                            value={lead.value}
+                                            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                                        >
+                                            {lead.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                    {errors.leadType && (
+                        <p className="text-sm text-red-400 mt-1.5 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            {errors.leadType.message}
                         </p>
                     )}
                 </div>
